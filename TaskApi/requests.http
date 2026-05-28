@@ -1,0 +1,39 @@
+### Paginación - página 1
+GET {{baseUrl}}/tasks?page=1&pageSize=2
+Accept: application/json
+
+###
+
+### Paginación - página 2
+GET {{baseUrl}}/tasks?page=2&pageSize=2
+Accept: application/json
+
+###
+
+### Paginación + completadas
+GET {{baseUrl}}/tasks?completed=true&page=1&pageSize=2
+Accept: application/json
+
+###
+
+### Paginación + búsqueda
+GET {{baseUrl}}/tasks?search=EF&page=1&pageSize=5
+Accept: application/json
+
+###
+
+### Paginación + filtros combinados
+GET {{baseUrl}}/tasks?completed=false&search=ASP&page=1&pageSize=5
+Accept: application/json
+
+###
+
+### page inválido
+GET {{baseUrl}}/tasks?page=0&pageSize=5
+Accept: application/json
+
+###
+
+### pageSize inválido
+GET {{baseUrl}}/tasks?page=1&pageSize=0
+Accept: application/json
