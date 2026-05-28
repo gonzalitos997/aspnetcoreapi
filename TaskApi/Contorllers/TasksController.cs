@@ -66,6 +66,19 @@ public class TasksController(ITaskService taskService) : ControllerBase
         return Ok(updatedTask);
     }
 
+    [HttpPatch("{id:int}/complete")]
+    public async Task<IActionResult> Complete(int id)
+    {
+        var completedTask = await _taskService.CompleteAsync(id);
+
+        if (completedTask is null)
+        {
+            return NotFound(new { message = $"Task con id {id} no encontrada" });
+        }
+
+        return Ok(completedTask);
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {

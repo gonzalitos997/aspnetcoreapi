@@ -106,6 +106,25 @@ public class TaskService(AppDbContext dbContext) : ITaskService
         return MapToResponse(task);
     }
 
+    public async Task<TaskResponse?> CompleteAsync(int id)
+    {
+        var task = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == id);
+
+        if (task is null)
+        {
+            return null;
+        }
+
+        if (!task.IsCompleted)
+        {
+            task.IsCompleted = true;
+            task.CompletedAt = DateTime.UtcNow;
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return MapToResponse(task);
+    }
+
     public async Task<bool> DeleteAsync(int id)
     {
         var task = await _dbContext.Tasks.FirstOrDefaultAsync(t => t.Id == id);
