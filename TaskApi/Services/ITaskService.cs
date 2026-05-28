@@ -15,5 +15,6 @@ public interface ITaskService
     Task<TaskResponse> CreateAsync(CreateTaskRequest request);
     Task<TaskResponse?> UpdateAsync(int id, UpdateTaskRequest request);
     Task<TaskResponse?> CompleteAsync(int id);
+    Task<TaskResponse?> UncompleteAsync(int id);
     Task<bool> DeleteAsync(int id);
 }

@@ -49,7 +49,6 @@ public class TasksController(ITaskService taskService) : ControllerBase
     public async Task<IActionResult> Create([FromBody] CreateTaskRequest request)
     {
         var newTask = await _taskService.CreateAsync(request);
-
         return CreatedAtAction(nameof(GetById), new { id = newTask.Id }, newTask);
     }
 
@@ -77,6 +76,19 @@ public class TasksController(ITaskService taskService) : ControllerBase
         }
 
         return Ok(completedTask);
+    }
+
+    [HttpPatch("{id:int}/uncomplete")]
+    public async Task<IActionResult> Uncomplete(int id)
+    {
+        var task = await _taskService.UncompleteAsync(id);
+
+        if (task is null)
+        {
+            return NotFound(new { message = $"Task con id {id} no encontrada" });
+        }
+
+        return Ok(task);
     }
 
     [HttpDelete("{id:int}")]
