@@ -1,16 +1,14 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
-using TaskApi.Dtos;
 
 namespace TaskApi.Tests;
 
-public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+public class TasksEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly HttpClient _client;
 
-    public TasksEndpointsTests(WebApplicationFactory<Program> factory)
+    public TasksEndpointsTests(CustomWebApplicationFactory factory)
     {
         _client = factory.CreateClient();
     }
@@ -18,11 +16,12 @@ public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Complete_Should_Mark_Task_As_Completed()
     {
-        var response = await _client.PatchAsync("/tasks/1/complete", content: null);
+        var request = new HttpRequestMessage(HttpMethod.Patch, "/tasks/1/complete");
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
+        var task = await response.Content.ReadFromJsonAsync<TaskApi.Dtos.TaskResponse>();
 
         task.Should().NotBeNull();
         task!.Id.Should().Be(1);
@@ -33,13 +32,15 @@ public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Uncomplete_Should_Mark_Task_As_NotCompleted()
     {
-        await _client.PatchAsync("/tasks/1/complete", content: null);
+        var completeRequest = new HttpRequestMessage(HttpMethod.Patch, "/tasks/1/complete");
+        await _client.SendAsync(completeRequest);
 
-        var response = await _client.PatchAsync("/tasks/1/uncomplete", content: null);
+        var uncompleteRequest = new HttpRequestMessage(HttpMethod.Patch, "/tasks/1/uncomplete");
+        var response = await _client.SendAsync(uncompleteRequest);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
+        var task = await response.Content.ReadFromJsonAsync<TaskApi.Dtos.TaskResponse>();
 
         task.Should().NotBeNull();
         task!.Id.Should().Be(1);
@@ -50,7 +51,8 @@ public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Complete_Should_Return_NotFound_When_Task_Does_Not_Exist()
     {
-        var response = await _client.PatchAsync("/tasks/999999/complete", content: null);
+        var request = new HttpRequestMessage(HttpMethod.Patch, "/tasks/999999/complete");
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -58,7 +60,8 @@ public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task Uncomplete_Should_Return_NotFound_When_Task_Does_Not_Exist()
     {
-        var response = await _client.PatchAsync("/tasks/999999/uncomplete", content: null);
+        var request = new HttpRequestMessage(HttpMethod.Patch, "/tasks/999999/uncomplete");
+        var response = await _client.SendAsync(request);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
