@@ -16,6 +16,15 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 
 var app = builder.Build();
 
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    dbContext.Database.Migrate();
+    DbInitializer.Seed(dbContext);
+}
+
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
@@ -27,11 +36,6 @@ app.UseSwaggerUI(options =>
 
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.Migrate();
-    DbInitializer.Seed(dbContext);
-}
-
 app.Run();
+
+public partial class Program { }
