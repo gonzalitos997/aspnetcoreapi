@@ -1,72 +1,65 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
+using Microsoft.AspNetCore.Mvc.Testing;
+using TaskApi.Dtos;
 
 namespace TaskApi.Tests;
 
-public class TaskEndpointsTests : IClassFixture<TaskApiFactory>
+public class TasksEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
 
-    public TaskEndpointsTests(TaskApiFactory factory)
+    public TasksEndpointsTests(WebApplicationFactory<Program> factory)
     {
         _client = factory.CreateClient();
     }
 
     [Fact]
-    public async Task GetTasks_ShouldReturnOk()
+    public async Task Complete_Should_Mark_Task_As_Completed()
     {
-        var response = await _client.GetAsync("/tasks");
+        var response = await _client.PatchAsync("/tasks/1/complete", content: null);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
+
+        task.Should().NotBeNull();
+        task!.Id.Should().Be(1);
+        task.IsCompleted.Should().BeTrue();
+        task.CompletedAt.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task PostTasks_WithValidBody_ShouldCreateTask()
+    public async Task Uncomplete_Should_Mark_Task_As_NotCompleted()
     {
-        var request = new { title = "Aprender integration testing" };
+        await _client.PatchAsync("/tasks/1/complete", content: null);
 
-        var response = await _client.PostAsJsonAsync("/tasks", request);
+        var response = await _client.PatchAsync("/tasks/1/uncomplete", content: null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var body = await response.Content.ReadAsStringAsync();
-        body.Should().Contain("Aprender integration testing");
+        var task = await response.Content.ReadFromJsonAsync<TaskResponse>();
+
+        task.Should().NotBeNull();
+        task!.Id.Should().Be(1);
+        task.IsCompleted.Should().BeFalse();
+        task.CompletedAt.Should().BeNull();
     }
 
     [Fact]
-    public async Task PostTasks_WithInvalidBody_ShouldReturnBadRequest()
+    public async Task Complete_Should_Return_NotFound_When_Task_Does_Not_Exist()
     {
-        var request = new { title = "" };
+        var response = await _client.PatchAsync("/tasks/999999/complete", content: null);
 
-        var response = await _client.PostAsJsonAsync("/tasks", request);
-
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
-    public async Task PutTasks_WhenMarkingAsCompleted_ShouldSetCompletedAt()
+    public async Task Uncomplete_Should_Return_NotFound_When_Task_Does_Not_Exist()
     {
-        var createRequest = new { title = "Tarea para completar" };
+        var response = await _client.PatchAsync("/tasks/999999/uncomplete", content: null);
 
-        var createResponse = await _client.PostAsJsonAsync("/tasks", createRequest);
-        createResponse.EnsureSuccessStatusCode();
-
-        var createdTask = await createResponse.Content.ReadFromJsonAsync<TaskResponseDto>();
-
-        var updateRequest = new { title = "Tarea para completar", isCompleted = true };
-
-        var updateResponse = await _client.PutAsJsonAsync(
-            $"/tasks/{createdTask!.Id}",
-            updateRequest
-        );
-
-        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-
-        var updatedTask = await updateResponse.Content.ReadFromJsonAsync<TaskResponseDto>();
-
-        updatedTask.Should().NotBeNull();
-        updatedTask!.IsCompleted.Should().BeTrue();
-        updatedTask.CompletedAt.Should().NotBeNull();
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }
